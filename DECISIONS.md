@@ -62,7 +62,9 @@ Why:
 
 ## 6. Two things the AI assistant got wrong, and how I noticed
 
-_To be written by me._
+**1. A rent invoice without an end date passed the CHECK.** The agent wrote `period_start is not null and period_end >= period_start`. When `period_end` is NULL, the comparison is NULL, and a CHECK treats NULL as passing, so such an invoice would have been accepted. I noticed it while comparing the migration with the brief, and sent the corrected line with `period_end is not null`. The agent then also added `period_index is not null`, for the same reason. In `ai-logs/01-cursor-agent.md`, search for "period_end is not null".
+
+**2. The schema broke `prisma generate`.** A partial unique index (one deposit per lease) made Prisma read leases to invoices as one-to-one. Separately, the composite foreign key on `gateway_bill_id` had no matching unique key. I noticed when generation failed after `db pull`. We replaced the index with `UNIQUE NULLS NOT DISTINCT (lease_id, period_index)`. Search for "NULLS NOT DISTINCT".
 
 ## Other decisions
 
