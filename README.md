@@ -6,7 +6,7 @@ Stack: Next.js 16 (App Router, TypeScript strict), Supabase (Postgres, Auth, Sto
 
 ## Run it
 
-Requirements: Node.js 20.9 or newer, Docker running, and the Supabase CLI (through `npx`).
+Requirements: Node.js 20.19+ or 22.12+ (Prisma 7 requirement), Docker running, and the Supabase CLI (through `npx`).
 
 ```bash
 npx supabase start          # starts the local stack from supabase/config.toml

@@ -38,13 +38,13 @@ Ordered from most to least severe. Line numbers refer to the pull request as giv
 **What goes wrong.**
 - **One request:** `prisma.invoice.create()` (line 34) is lazy and only runs inside `Promise.all` at line 46. But `await nextReference()` (line 41) runs for every invoice first, while no fee exists yet. With three overdue invoices, all three get the same `INV-n`.
 - **Two requests at once:** both read the same "last" invoice, so the references collide again.
-- **The "last" invoice is unreliable:** `orderBy: createdAt` is not the highest reference. The newest invoice is usually a rent invoice from the latest lease, which has no reference, so `last.reference.slice(4)` throws and the endpoint returns 500. An empty reference gives `INV-NaN`.
+- **`reference` and `createdAt` are not in the invoices table:** the brief's `invoices` has no such columns, so this code cannot run as written. If `reference` were added for fees only, rent invoices would have `null`, the newest invoice would usually be one of them, and `last.reference.slice(4)` would throw (500). `orderBy: createdAt` is also not the highest reference.
 - **Calling the endpoint twice** charges a second 2% fee on the same invoice, because nothing records that a fee was already added.
 - **`Promise.all` outside a transaction:** if one insert fails, the others stay. The response also says `created: n` even though nothing confirms it.
 
 **Fix.**
 - One `prisma.$transaction` with the lease locked.
-- References from a database sequence.
+- If references are needed, add a `reference` column in a migration and fill it from a database sequence.
 - A unique key per (invoice, late fee) so a repeat call creates nothing.
 
 ## Medium
