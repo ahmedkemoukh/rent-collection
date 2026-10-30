@@ -34,10 +34,11 @@ Ordered from most to least severe. Line numbers refer to the pull request as giv
 **What goes wrong.** `date_trunc('month', received_at)` and `${from}::date` use the session timezone (UTC on the server). Aisyah's transfer received 2026-03-01 00:30 MYT is 2026-02-28 16:30 UTC, so it is reported in February: the brief's expected `[300000, 0, 200000]` becomes `[300000, 200000, 0]`. Range boundaries are also 8 hours off.
 **Fix.** Build month boundaries in `Asia/Kuala_Lumpur`: `received_at >= (month_start AT TIME ZONE 'Asia/Kuala_Lumpur')`, and group by the Malaysia month.
 
-### 8. Lines 33-46, 41 and 50-53: duplicate fees, duplicate references, and partial writes
+### 8. Lines 34-46 and 50-53: duplicate fees, duplicate or broken references, and partial writes
 **What goes wrong.**
-- **One request:** Prisma queries are lazy and only run when awaited at line 46. But `await nextReference()` (line 41) runs for every invoice first, while no fee exists yet. With three overdue invoices, all three get the same `INV-n`.
-- **Two requests at once:** both read the same "last" invoice, so the references collide again. `orderBy: createdAt` is not even the highest reference.
+- **One request:** `prisma.invoice.create()` (line 34) is lazy and only runs inside `Promise.all` at line 46. But `await nextReference()` (line 41) runs for every invoice first, while no fee exists yet. With three overdue invoices, all three get the same `INV-n`.
+- **Two requests at once:** both read the same "last" invoice, so the references collide again.
+- **The "last" invoice is unreliable:** `orderBy: createdAt` is not the highest reference. The newest invoice is usually a rent invoice from the latest lease, which has no reference, so `last.reference.slice(4)` throws and the endpoint returns 500. An empty reference gives `INV-NaN`.
 - **Calling the endpoint twice** charges a second 2% fee on the same invoice, because nothing records that a fee was already added.
 - **`Promise.all` outside a transaction:** if one insert fails, the others stay. The response also says `created: n` even though nothing confirms it.
 
@@ -65,7 +66,7 @@ Ordered from most to least severe. Line numbers refer to the pull request as giv
 **Fix.** Add the kind deliberately: extend the enum, define its allocation order, update `InvoiceKind`, or store fees in a separate table.
 
 ### 13. Line 31: a 99.5% threshold computed with floats
-**What goes wrong.** An RM 2,000.00 invoice with RM 1,990.00 paid is skipped (99.5%), so RM 10 stays overdue without a fee. `invoiceStatus` calls it `overdue`, while this endpoint treats it as paid. Floating-point ratios on money are also fragile.
+**What goes wrong.** An RM 1,000.00 invoice with RM 995.00 paid is skipped (995 / 1000 = 0.995), so RM 5 stays overdue without a fee. `invoiceStatus` calls it `overdue`, while this endpoint treats it as paid. Floating-point ratios on money are also fragile.
 **Fix.** Compare integers: `if (paid >= invoice.amountSen) continue`.
 
 ## Low
