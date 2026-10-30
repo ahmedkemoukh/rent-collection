@@ -69,12 +69,12 @@ function Message({ title, description }: { title: string; description: string })
 
 export default function PaymentReturnPage({ searchParams }: { searchParams: SearchParams }) {
   return (
-    <main className="mx-auto max-w-lg space-y-4 p-6">
+    <div className="space-y-4">
       <h1 className="text-xl font-semibold">Payment status</h1>
       <Suspense fallback={<Skeleton className="h-32 w-full" />}>
         <BillStatus searchParams={searchParams} />
       </Suspense>
-      <Link href="/" className="text-sm underline underline-offset-4">Back to my lease</Link>
-    </main>
+      <Link href="/portal" className="text-sm underline underline-offset-4">Back to my lease</Link>
+    </div>
   )
 }
