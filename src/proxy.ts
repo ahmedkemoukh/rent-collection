@@ -31,8 +31,10 @@ export async function proxy(request: NextRequest) {
   return response
 }
 
+// /api is excluded entirely: route handlers authenticate every request themselves
+// (cookie or Bearer token) and answer 401 as JSON; they are never redirected to /login.
 export const config = {
   matcher: [
-    '/((?!api/webhooks|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
