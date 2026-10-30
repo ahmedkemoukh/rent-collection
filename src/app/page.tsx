@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { connection } from 'next/server'
 import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { requireAuth } from '@/lib/auth'
@@ -6,6 +7,7 @@ import { ApiError } from '@/lib/http'
 import { homeFor } from '@/lib/session'
 
 async function RoleRedirect(): Promise<null> {
+  await connection()
   let target = '/login'
   try {
     target = homeFor(await requireAuth())

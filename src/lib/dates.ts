@@ -35,6 +35,11 @@ export function parseInstant(value: string): Date | null {
   return instant
 }
 
+// The current Malaysia time as 'YYYY-MM-DDTHH:mm', the value format of an <input type="datetime-local">.
+export function malaysiaDateTimeLocal(now: Date = new Date()): string {
+  return new Date(now.getTime() + MALAYSIA_OFFSET_MS).toISOString().slice(0, 16)
+}
+
 // Today's calendar date in Malaysia, as YYYY-MM-DD, whatever the server's timezone.
 export function todayInMalaysia(now: Date = new Date()): string {
   return new Date(now.getTime() + MALAYSIA_OFFSET_MS).toISOString().slice(0, 10)
